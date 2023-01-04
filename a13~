@@ -1,0 +1,7 @@
+#lang pie
+
+; Q1.
+(claim intriguing-word Atom)
+(define intriguing-word 'intriguing-word)
+intriguing-word
+

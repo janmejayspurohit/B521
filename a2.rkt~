@@ -1,0 +1,23 @@
+#lang racket
+(require racket/trace)
+; Q1. list-ref
+
+
+(define list-ref
+  (lambda (ls n)
+    (letrec
+        ([nth-cdr (lambda (n)
+                    (cond
+                      [(zero? n) ls]
+                      [else (cdr (nth-cdr (sub1 n)))])
+                    )])
+      (car (nth-cdr n)))))
+
+(list-ref '(a b c) 1)
+
+
+; Q2. union
+
+(define union
+  (λ (lst1 lst2)
+    (cond

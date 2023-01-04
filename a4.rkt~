@@ -1,0 +1,40 @@
+#lang racket
+
+(define value-of-fn
+  (λ (e env)
+    (match e
+      [`,n #:when (number? n) n]
+      [`,b #:when (boolean? b) b]
+      [`,y #:when (symbol? y) (apply-env-fn env y)]
+      (`(if ,t ,c ,a) (if (value-of-fn t env) (value-of-fn c env) (value-of-fn a env)))
+      [`(zero? ,x) (zero? (value-of-fn x env))]
+      [`(* ,x ,y) (* (value-of-fn x env) (value-of-fn y env))]
+      [`(sub1 ,x) (sub1 (value-of-fn x env))]
+      [`(let ([,x ,val]) ,body) (let ([v (value-of-fn val env)])
+                                  (value-of-fn body
+                                            (λ (arg)
+                                              (if (eqv? arg x) v
+                                                  (env arg)))))]
+      [`(lambda (,x) ,body)
+       #:when (symbol? x)
+       (λ (arg)
+         (value-of-fn body (extend-env-fn x arg env)))]
+      [`(,rator ,rand)
+       ((value-of-fn rator env) (value-of-fn rand env))])))
+
+(define apply-env-fn
+  (λ (env y)
+    (match env
+      [`(extend-env-fn ,x ,arg ,env^)
+       (cond
+         [(eqv? y x) arg]
+         [else (apply-env-fn env^ y)])]
+      [`(empty-env-fn) (error "Can't find" y)])))
+
+(define extend-env-fn
+  (λ (x arg env)
+    `(extend-env-fn ,x ,arg ,env)))
+
+(define empty-env-fn
+  (lambda ()
+    (lambda (y) (error 'value-of-fn "variable not found ~s" y))))

@@ -1,0 +1,31 @@
+#lang racket
+
+; Q1. lex
+(define debruijn
+  (λ (v cenv)
+    (cond
+      [(null? cenv) (error "Invalid")]
+      [(eqv? (car cenv) v) 0]
+      [else (add1 (debruijn v (cdr cenv)))])))
+
+(define lex
+  (λ (e cenv)
+    (match e
+      [`,y #:when(symbol? y)
+           ((λ (var)
+              'var (debruijn y cenv))
+            'var)]
+      [`(lambda (,x) ,body) #:when (symbol? x)
+                            `(lambda ,(lex body (cons x cenv)))]
+      [`(,rator ,rand)
+       `(,(lex rator cenv) ,(lex rand cenv))])))
+
+(lex '(lambda (x)
+        (lambda (y)
+          (lambda (z)
+            (lambda (y)
+              (lambda (w)
+                (lambda (x)
+                  (lambda (y)
+                    ((((x y) z) ((y w) x)) y))))))))
+     '())

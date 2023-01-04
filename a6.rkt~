@@ -1,0 +1,115 @@
+#lang racket
+
+; Q1.
+(define empty-k
+  (lambda ()
+    (let ((once-only #f))
+      (lambda (v)
+        (if
+         once-only
+         (error 'empty-k "You can only invoke the empty continuation once")
+         (begin (set! once-only #t) v))))))
+
+(define binary-to-decimal-cps
+  (lambda (n k)
+    (cond
+      [(null? n) (k 0)]
+      [else (binary-to-decimal-cps (cdr n) (λ (v)
+                                             (k (+ (car n) (* 2 v)))))])))
+
+(printf "----------Q1-----------\n")
+(binary-to-decimal-cps '() (empty-k))
+(binary-to-decimal-cps '(1) (empty-k))
+(binary-to-decimal-cps '(0 1) (empty-k))
+(binary-to-decimal-cps '(1 1 0 1) (empty-k))
+
+; Q2.
+(define star-cps
+  (lambda (m k)
+    (k (lambda (n k^)
+         k^ (* m n)))))
+
+(printf "----------Q2-----------\n")
+((star-cps 2 (empty-k)) 3 (empty-k))
+((star-cps ((star-cps 2 (empty-k)) 3 (empty-k)) (empty-k)) 5 (empty-k))
+
+; Q3.
+(define times-cps
+  (lambda (ls k)
+    (cond
+      [(null? ls) (k 1)]
+      [(zero? (car ls)) (k 0)]
+      [else (times-cps (cdr ls) (λ (v)
+                                  (k (* (car ls) v))))])))
+
+(printf "----------Q3-----------\n")
+(times-cps '(1 2 3 4 5) (empty-k))
+(times-cps '(1 2 3 0 3) (empty-k))
+
+; Q4.
+(define times-cps-2
+  (lambda (ls k)
+    (cond
+      [(null? ls) (k 1)]
+      [(zero? (car ls)) 0]
+      [else (times-cps (cdr ls) (λ (v)
+                                  (k (* (car ls) v))))])))
+
+(printf "----------Q4-----------\n")
+(times-cps-2 '(1 2 3 4 5) (empty-k))
+(times-cps-2 '(1 2 3 0 3) (empty-k))
+
+; Q5.
+(define remv-first-9*-cps
+  (lambda (ls k)
+    (cond
+      [(null? ls) (k '())]
+      [(pair? (car ls))
+       (cond
+         [
+          (remv-first-9*-cps (car ls) (λ (v)
+                                        (equal? (car ls) v)))
+          (remv-first-9*-cps (cdr ls) (λ (v)
+                                        (k (cons (car ls) v))) )]
+         [else  (remv-first-9*-cps (car ls) (λ (v)
+                                              (k (cons v (cdr ls)))))])]
+      [(eqv? (car ls) '9) (k (cdr ls))]
+      [else
+       (remv-first-9*-cps (cdr ls) (λ (v)
+                                     (k (cons (car ls) v))))])))
+
+(printf "----------Q5-----------\n")
+(remv-first-9*-cps '((1 2 (3) 9)) (empty-k))
+(remv-first-9*-cps '(9 (9 (9 (9)))) (empty-k))
+(remv-first-9*-cps '(((((9) 9) 9) 9) 9) (empty-k))
+
+
+
+
+; Q10.
+(define unfold-cps
+  (lambda (p f g seed k)
+    ((lambda (h)
+       ((h h) seed '() k))
+     (lambda (h)
+       (lambda (seed ans k)
+         (p seed
+            (λ(v)
+              (if v
+                  (k ans)
+                  (g seed (λ (w)
+                            (f seed (λ (u)
+                                      ((h h) w (cons u ans) k)))))))))))))
+
+(define null?-cps
+  (lambda (ls k)
+    (k (null? ls))))
+(define car-cps
+  (lambda (pr k)
+    (k (car pr))))
+(define cdr-cps
+  (lambda (pr k)
+    (k (cdr pr))))
+
+(printf "----------Q10-----------\n")
+(unfold-cps null?-cps car-cps cdr-cps '(a b c d e) (empty-k))

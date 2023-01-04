@@ -1,0 +1,21 @@
+#lang racket
+(require racket/trace)
+
+; Q1.
+(define last-non-zero
+  (lambda (ls)
+    (let/cc k
+      (letrec
+          ((last-non-zero
+            (lambda (ls)
+              (trace last-non-zero)
+              (cond
+                ((null? ls) ls)
+                ((eqv? (car ls) 0) (k (last-non-zero (cdr ls))))
+                (else (cons (car ls) (last-non-zero (cdr ls))))
+                ))))
+        (last-non-zero ls)))))
+
+(last-non-zero '(0))
+(last-non-zero '(1 2 3 0 4 5))
+(last-non-zero '(1 2 3 4 5))

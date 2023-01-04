@@ -1,0 +1,241 @@
+#lang racket
+(require racket/trace)
+
+; Q1. Countdown
+(define countdown
+  (λ (n)
+    (cond
+      [(zero? n) '(0)]
+      [else (cons n (countdown (sub1 n)))])))
+
+(countdown 15)
+
+; Q2. insertL
+(define insertL
+  (λ (x y lst)
+    (cond
+      [(null? lst) '()]
+      [(eqv? (car lst) x) (cons y (cons x (insertL x y (cdr lst))))]
+      [else (cons (car lst) (insertL x y (cdr lst)))])))
+
+(insertL 'x 'y '(x x y y x))
+
+; Q3. remv-1st
+(define remv-1st
+  (λ (x lst)
+    (cond
+      [(null? lst) '()]
+      [(eqv? (car lst) x) (cdr lst)]
+      [else (cons (car lst)(remv-1st x (cdr lst)))])))
+
+(remv-1st 10 '(2 8 9 10 5 10))
+
+; Q4. map
+(define map
+  (λ (fn lst)
+    (cond
+      [(null? lst) '()]
+      [else (cons (fn (car lst)) (map fn (cdr lst)))])))
+
+(map sub1 '(4 5 6))
+
+; Q5. filter
+(define filter
+  (λ (fn lst)
+    (cond
+      [(null? lst) '()]
+      [(fn (car lst)) (cons (car lst) (filter fn (cdr lst)))]
+      [else (filter fn (cdr lst))])))
+
+(filter even? '(2 4 5))
+
+; Q6. zip
+(define zip
+  (λ (lst1 lst2)
+    (cond
+      [(eqv? (length lst1) 0) '()]
+      [(eqv? (length lst2) 0) '()]
+      [else (cons (cons (car lst1) (car lst2)) (zip (cdr lst1) (cdr lst2)))])))
+
+(zip '(1 2 4 3) '(a b c d e f))
+
+; Q7. list-index-ofv
+(define list-index-ofv
+  (λ (x lst)
+    (cond
+      [(null? lst) 0]
+      [(eqv? (car lst) x) 0]
+      [else (add1 (list-index-ofv x (cdr lst)))])))
+
+(list-index-ofv 'p '(y d z d x i k f))
+
+; Q8. append
+(define append
+  (λ (lst1 lst2)
+    (cond
+      [(null? lst1) lst2]
+      [else (cons (car lst1) (append (cdr lst1) lst2))])))
+
+(append '(g d) '(y d z d x i k f))
+
+
+; Q9. reverse
+(define reverse
+  (λ (lst)
+    (cond
+      [(null? lst) null]
+      [else (append (reverse(cdr lst)) (list (car lst)))])))
+
+(reverse '(y d z d x i k f))
+
+; Q10. repeat
+(define repeat
+  (λ (lst f)
+    (cond
+      [(zero? (sub1 f)) lst]
+      [else (append lst (repeat lst (sub1 f)))])))
+
+(repeat '(1 2 3) 5)
+
+; Q11. same-lists*
+(define same-lists*
+  (λ (lst1 lst2)
+    (cond
+      [(and (null? lst1) (null? lst2)) #t]
+      [(or (null? lst1) (null? lst2)) #f]
+      [(eqv? (eqv? (length lst1) (length lst2)) #f) #f]
+      [(and (and (pair? (car lst1)) (pair? (car lst2))) (same-lists* (car lst1) (car lst2)))(same-lists* (cdr lst1) (cdr lst2))]
+      [(eqv? (car lst1) (car lst2)) (same-lists* (cdr lst1) (cdr lst2))]
+      [else #f])))
+
+(same-lists* '(1 2 3) '(1 2 3 4))
+(same-lists* '((a) b (c d) d) '((a) b (c d) d))
+
+; Q12. dots
+; ((w x) y (z)) == ((w . (x . ())) . (y . ((z . ()))))
+(equal? '((w x) y (z)) '((w . (x . ())) . (y . ((z . ())))))
+
+; Q13. binary->natural
+(define ^
+  (λ (n m)
+    (cond
+      [(zero? m) 1]
+      [else (* n (^ n (sub1 m)))])))
+
+(define binary->natural
+  (λ (lst)
+    (cond
+      [(null? lst) 0]
+      [else (+(* (^ 2 (sub1 (length lst)))(car lst)) (binary->natural (cdr lst)))])))
+
+(trace binary->natural)
+(binary->natural '(0 0 1 1))
+
+; Q14. div
+(define -
+  (λ (a b)
+    (cond
+      [(zero? b) a]
+      [else (sub1 (- a (sub1 b)))])))
+
+(define div
+  (λ (dividend divisor)
+    (define count 0)
+    (cond
+      [(zero? dividend) 0]
+      [else (add1 (div (- dividend divisor) divisor))])))
+
+(div 15 3)
+
+; Q15. append-map
+(define append-map
+  (λ (fn lst)
+    (cond
+      [(null? lst) '()]
+      [else (append (fn (car lst)) (append-map fn (cdr lst)))])))
+
+(append-map countdown (countdown 5))
+
+; Q16. set-difference
+(define rember
+  (λ (ls ele)
+    (cond
+      [(null? ls) '()]
+      [(eqv? (car ls) ele) (cdr ls)]
+      [else (cons (car ls) (rember (cdr ls) ele))])))
+
+(define set-difference
+  (λ (lst1 lst2)
+    (cond
+      [(null? lst2) lst1]
+      [else (set-difference (rember lst1 (car lst2)) (cdr lst2))])))
+
+(set-difference '(1 2 3 4 5) '(2 6 4 8))
+
+; Q17. foldr
+(define foldr
+  (λ (fn acc lst)
+    (cond
+      [(null? lst) acc]
+      [else (foldr fn (fn acc (car lst)) (cdr lst))])))
+
+(foldr cons '() '(1 2 3 4))
+(foldr + 0 '(1 2 3 4))
+(foldr * 2 '(1 2 3 4))
+
+; Q18. powerset
+(define powerset
+  (λ (lst)
+    (cond
+      [(null? lst) '(())]
+      [else (append-map (λ (x)
+                          (list x (cons (car lst) x)))
+                        (powerset (cdr lst)))])))
+
+(powerset '(1 2 3))
+
+; Q19. cartesian-product
+(define cartesian-product                                                               
+  (λ (lst)
+    (cond
+      [(null? lst) '()]
+      [else (map (λ (x)                                                            
+        (cons (list (car x) (car lst))                                
+              (append (cartesian-product (list (car x)) (cdr lst))                  
+                    (cartesian-product (cdr x)  lst))))
+                        (cartesian-product (cdr lst)))])))
+      
+(cartesian-product '('(5 4) '(3 2 1)))
+
+
+; Q21. snowball
+#;(define snowball
+  (letrec
+      ((odd-case
+        (lambda (fix-odd)
+          (lambda (x)
+            (cond 
+              ((and (exact-integer? x) (positive? x) (odd? x)) (snowball (add1 (* x 3)))) 
+              (else (fix-odd x))))))
+       (even-case
+        (lambda (fix-even)
+          (lambda (x)
+            (cond 
+              ((and (exact-integer? x) (positive? x) (even? x)) (snowball (/ x 2))) 
+              (else (fix-even x))))))
+       (one-case
+        (lambda (fix-one)
+          (lambda (x)
+            (cond
+              ((zero? (sub1 x)) 1)
+              (else (fix-one x))))))
+       (base
+        (lambda (x)
+          (error 'error "Invalid value ~s~n" x))))
+    ))
+;(snowball 120)
+
+; Q22. quine
+"4467x12"
+
+ 
